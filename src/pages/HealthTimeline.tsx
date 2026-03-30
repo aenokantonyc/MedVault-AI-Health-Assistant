@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/useAuth';
@@ -20,11 +20,7 @@ export default function HealthTimeline({ onNavigate }: HealthTimelineProps) {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadTimeline();
-  }, []);
-
-  const loadTimeline = async () => {
+  const loadTimeline = useCallback(async () => {
     if (!user) return;
 
     const { data, error } = await supabase
@@ -43,7 +39,11 @@ export default function HealthTimeline({ onNavigate }: HealthTimelineProps) {
     }
 
     setLoading(false);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    loadTimeline();
+  }, [loadTimeline]);
 
   const getMockEvents = (): TimelineEvent[] => {
     return [

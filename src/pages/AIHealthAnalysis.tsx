@@ -1,6 +1,6 @@
 import { useAuth } from "../contexts/useAuth";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Brain, Lock, AlertTriangle, Heart } from "lucide-react";
+import { ArrowLeft, Brain, Lock, AlertTriangle, Heart, Download } from "lucide-react";
 
 interface AIHealthAnalysisProps {
   onNavigate: (page: string) => void;
@@ -35,6 +35,73 @@ export default function AIHealthAnalysis({ onNavigate }: AIHealthAnalysisProps) 
       generateMockReport();
     }
   }, [accountType]);
+
+  const downloadPDFReport = () => {
+    // Create a simple PDF mockup using canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 600;
+    const ctx = canvas.getContext('2d');
+
+    if (ctx) {
+      // Background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 800, 600);
+
+      // Title
+      ctx.fillStyle = '#111827';
+      ctx.font = 'bold 32px Arial';
+      ctx.fillText('AI Health Analysis Report', 50, 50);
+
+      // Date
+      ctx.fillStyle = '#6b7280';
+      ctx.font = '14px Arial';
+      ctx.fillText(`Generated: ${new Date().toLocaleDateString()}`, 50, 80);
+
+      // Content
+      ctx.fillStyle = '#374151';
+      ctx.font = 'bold 18px Arial';
+      ctx.fillText('Health Summary:', 50, 130);
+      ctx.font = '14px Arial';
+      ctx.fillText('Patient shows stable diabetes management. Blood sugar under', 50, 160);
+      ctx.fillText('control and vitals are within normal range.', 50, 185);
+
+      ctx.font = 'bold 18px Arial';
+      ctx.fillText('Risk Level: Low Risk', 50, 240);
+
+      ctx.font = 'bold 18px Arial';
+      ctx.fillText('Recommendations:', 50, 290);
+      const recommendations = [
+        '• Continue Metformin',
+        '• Walk 30 minutes daily',
+        '• Avoid late night meals',
+        '• Repeat blood test in 3 months'
+      ];
+      recommendations.forEach((rec, idx) => {
+        ctx.font = '14px Arial';
+        ctx.fillText(rec, 70, 320 + (idx * 30));
+      });
+
+      // Footer
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = '12px Arial';
+      ctx.fillText('Note: AI assists your understanding. It does not replace a doctor\'s advice.', 50, 580);
+
+      // Convert canvas to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `AI_Health_Analysis_${new Date().toISOString().split('T')[0]}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      });
+    }
+  };
 
   // ============================================================
   // 🔒 LOCK SCREEN (BASIC USER)
@@ -124,6 +191,14 @@ export default function AIHealthAnalysis({ onNavigate }: AIHealthAnalysisProps) 
             </p>
           </div>
         </div>
+
+        <button
+          onClick={downloadPDFReport}
+          className="mb-8 bg-green-600 text-white px-6 py-3 rounded-xl text-xl font-bold hover:bg-green-700 flex items-center space-x-2"
+        >
+          <Download size={28} />
+          <span>Download Report (PDF)</span>
+        </button>
 
         <div className="space-y-6">
 

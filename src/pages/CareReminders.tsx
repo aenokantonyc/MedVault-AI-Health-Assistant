@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, Pill, Calendar, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Clock, Pill, Calendar, AlertCircle, X, Plus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/useAuth';
 
@@ -16,10 +16,25 @@ interface CareRemindersProps {
   onNavigate: (page: string) => void;
 }
 
+interface NewReminder {
+  title: string;
+  description: string;
+  reminderTime: string;
+  reminderType: string;
+}
+
 export default function CareReminders({ onNavigate }: CareRemindersProps) {
   const { user } = useAuth();
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDialog, setShowDialog] = useState(false);
+  const [newReminder, setNewReminder] = useState<NewReminder>({
+    title: '',
+    description: '',
+    reminderTime: '',
+    reminderType: 'Follow-up'
+  });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadReminders();
@@ -88,6 +103,61 @@ export default function CareReminders({ onNavigate }: CareRemindersProps) {
     return colors[type] || 'bg-gray-600';
   };
 
+  const handleSaveReminder = async () => {
+    if (!newReminder.title.trim() || !newReminder.reminderTime.trim()) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      if (user) {
+        const { data, error } = await supabase
+          .from('care_reminders')
+          .insert([
+            {
+              user_id: user.id,
+              title: newReminder.title,
+              description: newReminder.description,
+              reminder_type: newReminder.reminderType,
+              reminder_time: newReminder.reminderTime,
+              is_active: true,
+              created_at: new Date().toISOString()
+            }
+          ]);
+
+        if (error) {
+          console.error('Error saving reminder:', error);
+          alert('Error saving reminder. Using mock data.');
+        }
+      }
+
+      // Add the new reminder to the local state
+      const addedReminder: Reminder = {
+        id: `reminder-${Date.now()}`,
+        reminder_type: newReminder.reminderType,
+        title: newReminder.title,
+        description: newReminder.description || null,
+        reminder_time: newReminder.reminderTime,
+        is_active: true
+      };
+
+      setReminders([addedReminder, ...reminders]);
+      setShowDialog(false);
+      setNewReminder({
+        title: '',
+        description: '',
+        reminderTime: '',
+        reminderType: 'Follow-up'
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Failed to save reminder');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-2xl mx-auto">
@@ -99,7 +169,113 @@ export default function CareReminders({ onNavigate }: CareRemindersProps) {
           <span className="text-2xl font-medium">Back to Dashboard</span>
         </button>
 
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">Care Reminders</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-bold text-gray-900">Care Reminders</h1>
+          <button
+            onClick={() => setShowDialog(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold text-lg hover:bg-blue-700 flex items-center space-x-2"
+          >
+            <Plus size={24} />
+            <span>New Details</span>
+          </button>
+        </div>
+
+        {/* New Reminder Dialog */}
+        {showDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl max-w-xl w-full max-h-screen overflow-y-auto shadow-2xl">
+              <div className="sticky top-0 bg-white border-b-4 border-gray-200 p-6 flex justify-between items-center">
+                <h2 className="text-3xl font-bold text-gray-900">Add New Reminder</h2>
+                <button
+                  onClick={() => setShowDialog(false)}
+                  disabled={saving}
+                  className="bg-gray-100 p-3 rounded-xl hover:bg-gray-200 disabled:bg-gray-200"
+                >
+                  <X size={32} className="text-gray-600" />
+                </button>
+              </div>
+
+              <div className="p-8 space-y-6">
+                {/* Reminder Type */}
+                <div>
+                  <label className="block text-xl font-bold text-gray-900 mb-3">
+                    Reminder Type
+                  </label>
+                  <select
+                    value={newReminder.reminderType}
+                    onChange={(e) => setNewReminder({ ...newReminder, reminderType: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg focus:border-blue-600 focus:outline-none"
+                  >
+                    <option value="Follow-up">Follow-up Visit</option>
+                    <option value="Medicine">Medicine</option>
+                    <option value="Refill">Prescription Refill</option>
+                  </select>
+                </div>
+
+                {/* Heading */}
+                <div>
+                  <label className="block text-xl font-bold text-gray-900 mb-3">
+                    Heading/Title <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Doctor Follow-up Visit"
+                    value={newReminder.title}
+                    onChange={(e) => setNewReminder({ ...newReminder, title: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg focus:border-blue-600 focus:outline-none"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-xl font-bold text-gray-900 mb-3">
+                    Description
+                  </label>
+                  <textarea
+                    placeholder="e.g., Visit Dr. Kumar for diabetes check-up"
+                    value={newReminder.description}
+                    onChange={(e) => setNewReminder({ ...newReminder, description: e.target.value })}
+                    rows={4}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg focus:border-blue-600 focus:outline-none"
+                  />
+                </div>
+
+                {/* Date and Time Picker */}
+                <div>
+                  <label className="block text-xl font-bold text-gray-900 mb-3">
+                    Remind Me On <span className="text-red-600">*</span>
+                  </label>
+                  <div className="flex items-center space-x-3">
+                    <Clock size={28} className="text-blue-600" />
+                    <input
+                      type="datetime-local"
+                      value={newReminder.reminderTime}
+                      onChange={(e) => setNewReminder({ ...newReminder, reminderTime: e.target.value })}
+                      className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg text-lg focus:border-blue-600 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Save Button */}
+                <button
+                  onClick={handleSaveReminder}
+                  disabled={saving}
+                  className="w-full bg-green-600 text-white py-4 px-6 rounded-lg text-xl font-bold hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+                >
+                  {saving ? 'Saving...' : 'Save Reminder'}
+                </button>
+
+                <button
+                  onClick={() => setShowDialog(false)}
+                  disabled={saving}
+                  className="w-full bg-gray-200 text-gray-900 py-4 px-6 rounded-lg text-xl font-bold hover:bg-gray-300 disabled:bg-gray-200 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center text-2xl text-gray-600 py-12">Loading reminders...</div>

@@ -1,6 +1,7 @@
 import { createContext, useState, ReactNode } from "react";
 
 type UserType = {
+  id: string;
   email: string;
   accountType: "basic" | "premium";
 } | null;
@@ -27,13 +28,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // PREMIUM ACCOUNT (unlocks AI analysis paywall)
     if (email === "premiumuser@gmail.com" && password === "123456789") {
-      setUser({ email, accountType: "premium" });
+      setUser({ id: "premium-user-001", email, accountType: "premium" });
       return { error: null };
     }
 
     // BASIC ACCOUNT (locked features)
     if (email === "normaluser@gmail.com" && password === "123456789") {
-      setUser({ email, accountType: "basic" });
+      setUser({ id: "basic-user-001", email, accountType: "basic" });
       return { error: null };
     }
 

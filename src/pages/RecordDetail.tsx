@@ -26,24 +26,24 @@ export default function RecordDetail({ recordId, onNavigate }: RecordDetailProps
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const loadRecord = async () => {
+      const { data, error } = await supabase
+        .from('medical_records')
+        .select('*')
+        .eq('id', recordId)
+        .single();
+
+      if (error) {
+        console.error('Error loading record:', error);
+      } else {
+        setRecord(data);
+      }
+
+      setLoading(false);
+    };
+
     loadRecord();
   }, [recordId]);
-
-  const loadRecord = async () => {
-    const { data, error } = await supabase
-      .from('medical_records')
-      .select('*')
-      .eq('id', recordId)
-      .single();
-
-    if (error) {
-      console.error('Error loading record:', error);
-    } else {
-      setRecord(data);
-    }
-
-    setLoading(false);
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
