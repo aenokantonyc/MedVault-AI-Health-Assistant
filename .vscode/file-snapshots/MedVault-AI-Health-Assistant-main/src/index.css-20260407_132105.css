@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+	--bg-soft: #f3f7fb;
+	--ink-900: #0f172a;
+	--ink-700: #334155;
+	--brand: #0d9488;
+	--brand-strong: #0f766e;
+	--accent: #ea580c;
+}
+
+body {
+	font-family: 'Manrope', sans-serif;
+	color: var(--ink-900);
+	background:
+		radial-gradient(1200px 480px at 8% -10%, #ccfbf1 0%, transparent 55%),
+		radial-gradient(1000px 380px at 90% -5%, #ffedd5 0%, transparent 52%),
+		var(--bg-soft);
+}
+
+@layer components {
+	.app-shell {
+		@apply min-h-screen p-4 md:p-6;
+	}
+
+	.page-wrap {
+		@apply max-w-3xl mx-auto;
+	}
+
+	.glass-card {
+		@apply rounded-3xl border border-slate-200/80 bg-white/95 shadow-[0_12px_36px_rgba(15,23,42,0.08)];
+	}
+
+	.btn-primary {
+		@apply w-full rounded-2xl bg-teal-600 px-6 py-4 text-lg font-bold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-400;
+	}
+
+	.btn-secondary {
+		@apply w-full rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold text-slate-800 transition hover:bg-slate-200;
+	}
+
+	.field-label {
+		@apply mb-2 block text-sm font-bold uppercase tracking-wide text-slate-600;
+	}
+
+	.field-input {
+		@apply w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-base outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100;
+	}
+
+	.status-chip {
+		@apply inline-flex items-center rounded-full px-3 py-1 text-xs font-bold;
+	}
+}
