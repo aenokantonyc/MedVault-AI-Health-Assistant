@@ -1,78 +1,53 @@
-import { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './contexts/useAuth';
-import SignUp from './pages/SignUp';
+
+// Layout
+import Layout from './components/layout/Layout';
+
+// Pages
 import Login from './pages/Login';
+import SignUp from './pages/SignUp';
 import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
-import UploadRecord from './pages/UploadRecord';
-import MyRecords from './pages/MyRecords';
-import RecordDetail from './pages/RecordDetail';
-import HealthTimeline from './pages/HealthTimeline';
-import CareReminders from './pages/CareReminders';
-import AIHealthAnalysis from './pages/AIHealthAnalysis';
+import Assistant from './pages/Assistant';
+import Records from './pages/Records';
+import Reminders from './pages/Reminders';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 
-function AppContent() {
-  const { user, loading } = useAuth();
-  const [currentPage, setCurrentPage] = useState<string>('login');
-  const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
-
-  const handleNavigate = (page: string, recordId?: string) => {
-    setCurrentPage(page);
-    if (recordId) {
-      setSelectedRecordId(recordId);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-8 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-2xl text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
 
   if (!user) {
-    if (currentPage === 'signup') {
-      return <SignUp onNavigate={handleNavigate} />;
-    } else if (currentPage === 'forgot-password') {
-      return <ForgotPassword onNavigate={handleNavigate} />;
-    } else {
-      return <Login onNavigate={handleNavigate} />;
-    }
+    return <Navigate to="/login" replace />;
   }
 
-  switch (currentPage) {
-    case 'dashboard':
-      return <Dashboard onNavigate={handleNavigate} />;
-    case 'upload':
-      return <UploadRecord onNavigate={handleNavigate} />;
-    case 'records':
-      return <MyRecords onNavigate={handleNavigate} />;
-    case 'record-detail':
-      return selectedRecordId ? (
-        <RecordDetail recordId={selectedRecordId} onNavigate={handleNavigate} />
-      ) : (
-        <Dashboard onNavigate={handleNavigate} />
-      );
-    case 'timeline':
-      return <HealthTimeline onNavigate={handleNavigate} />;
-    case 'reminders':
-      return <CareReminders onNavigate={handleNavigate} />;
-    case 'ai-analysis':
-      return <AIHealthAnalysis onNavigate={handleNavigate} />;
-    default:
-      return <Dashboard onNavigate={handleNavigate} />;
-  }
-}
+  return <>{children}</>;
+};
 
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+
+          {/* Protected Routes inside Layout */}
+          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            <Route index element={<Dashboard />} />
+            <Route path="assistant" element={<Assistant />} />
+            <Route path="records" element={<Records />} />
+            <Route path="reminders" element={<Reminders />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
+        </Routes>
+      </Router>
     </AuthProvider>
   );
 }

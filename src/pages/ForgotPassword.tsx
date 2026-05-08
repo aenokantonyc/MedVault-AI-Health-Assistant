@@ -1,74 +1,80 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Mail, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-interface ForgotPasswordProps {
-  onNavigate: (page: string) => void;
-}
-
-export default function ForgotPassword({ onNavigate }: ForgotPasswordProps) {
+const ForgotPassword = () => {
   const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setLoading(true);
+    // Simulate API call
+    setTimeout(() => {
+      setLoading(false);
+      setSuccess(true);
+    }, 1000);
   };
 
   return (
-    <div className="min-h-screen bg-white p-6 flex flex-col">
-      <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4 text-center">Forgot Password</h1>
-        <p className="text-xl text-gray-600 mb-8 text-center">
-          {submitted
-            ? 'Password reset link sent to your email (Demo Mode)'
-            : 'Enter your email to reset your password'}
-        </p>
+    <div className="min-h-screen flex items-center justify-center p-8 bg-surface-bg">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md bg-white p-8 rounded-2xl shadow-sm border border-gray-100"
+      >
+        <Link to="/login" className="inline-flex items-center text-sm font-medium text-text-secondary hover:text-primary-blue mb-6 transition-colors">
+          <ArrowLeft size={16} className="mr-1" /> Back to Login
+        </Link>
 
-        {!submitted ? (
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-text-primary mb-2">Reset Password</h2>
+          <p className="text-text-secondary text-sm">Enter your email address and we'll send you a link to reset your password.</p>
+        </div>
+
+        {success ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-6">
+            <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Mail size={32} />
+            </div>
+            <h3 className="text-lg font-bold text-text-primary mb-2">Check your email</h3>
+            <p className="text-text-secondary text-sm">We have sent a password reset link to {email}</p>
+          </motion.div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-2xl font-medium text-gray-900 mb-3">
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-6 py-5 text-2xl border-4 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none"
-                required
-              />
+              <label className="block text-sm font-medium text-text-secondary mb-2">Email Address</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input-field pl-10"
+                  placeholder="you@example.com"
+                />
+              </div>
             </div>
 
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-6 px-6 rounded-xl text-2xl font-bold hover:bg-blue-700"
+              disabled={loading}
+              className="btn-primary w-full flex justify-center items-center py-3"
             >
-              Send Reset Link
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('login')}
-              className="w-full text-blue-600 py-4 text-xl font-medium"
-            >
-              Back to Login
+              {loading ? (
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              ) : (
+                'Send Reset Link'
+              )}
             </button>
           </form>
-        ) : (
-          <div className="space-y-6">
-            <div className="bg-green-100 border-4 border-green-400 text-green-700 px-6 py-4 rounded-xl text-xl text-center">
-              Check your email for the password reset link
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('login')}
-              className="w-full bg-blue-600 text-white py-6 px-6 rounded-xl text-2xl font-bold hover:bg-blue-700"
-            >
-              Back to Login
-            </button>
-          </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
-}
+};
+
+export default ForgotPassword;
