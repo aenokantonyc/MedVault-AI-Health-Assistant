@@ -1,61 +1,109 @@
-import { createContext, useState, ReactNode } from "react";
-
-type UserType = {
-  email: string;
-  accountType: "basic" | "premium";
-} | null;
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '../services/supabase';
 
 type AuthContextType = {
-  user: UserType;
-  accountType: "basic" | "premium" | null;
-  signIn: (
-    email: string,
-    password: string
-  ) => Promise<{ error: { message: string } | null }>;
-  logout: () => void;
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null; needsEmailConfirmation: boolean }>;
+  resendConfirmation: (email: string) => Promise<{ error: Error | null }>;
+  signOut: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<UserType>(null);
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // ⭐ THIS IS THE IMPORTANT FUNCTION
-  const signIn = async (email: string, password: string) => {
-    // fake loading delay (looks real in demo)
-    await new Promise((resolve) => setTimeout(resolve, 800));
+  const ensureProfile = async (authUser: User, name?: string) => {
+    const fullName = name || authUser.user_metadata?.full_name || '';
+    const email = authUser.email || '';
+    if (!email) return;
 
-    // PREMIUM ACCOUNT (unlocks AI analysis paywall)
-    if (email === "premiumuser@gmail.com" && password === "123456789") {
-      setUser({ email, accountType: "premium" });
-      return { error: null };
+    try {
+      await supabase.from('profiles').upsert(
+        { id: authUser.id, full_name: fullName, email },
+        { onConflict: 'id' }
+      );
+    } catch (error) {
+      console.warn('Failed to ensure profile', error);
     }
-
-    // BASIC ACCOUNT (locked features)
-    if (email === "normaluser@gmail.com" && password === "123456789") {
-      setUser({ email, accountType: "basic" });
-      return { error: null };
-    }
-
-    // WRONG LOGIN
-    return {
-      error: { message: "Invalid email or password" },
-    };
   };
 
-  const logout = () => {
-    setUser(null);
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        ensureProfile(session.user).finally(() => setLoading(false));
+        return;
+      }
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        ensureProfile(session.user).finally(() => setLoading(false));
+        return;
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signIn = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (!error && data?.user) {
+      await ensureProfile(data.user);
+    }
+    return { error };
+  };
+
+  const signUp = async (email: string, password: string, name: string) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: name,
+        },
+      },
+    });
+    
+    // If email confirmation is required, data.user will be null here.
+    if (!error && data?.user) {
+      await ensureProfile(data.user, name);
+    }
+    return { error, needsEmailConfirmation: !data?.user };
+  };
+
+  const resendConfirmation = async (email: string) => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+    });
+    return { error };
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        accountType: user?.accountType ?? null,
-        signIn,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, resendConfirmation, signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -6,12 +6,14 @@ import { useAuth } from '../contexts/useAuth';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, resendConfirmation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState('demo@clinionova.com');
-  const [password, setPassword] = useState('demo123');
+  const [email, setEmail] = useState('patient@clinova.com');
+  const [password, setPassword] = useState('patient123');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [resendStatus, setResendStatus] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +22,14 @@ const Login = () => {
     try {
       const { error: signInError } = await signIn(email, password);
       if (signInError) {
-        throw new Error(signInError.message);
+        const message = signInError.message || 'Failed to sign in';
+        const emailNotConfirmed = /confirm|confirmed/i.test(message);
+        setNeedsConfirmation(emailNotConfirmed);
+        throw new Error(
+          emailNotConfirmed
+            ? 'Email not confirmed. Please confirm your email to continue.'
+            : message
+        );
       }
       navigate('/');
     } catch (err: any) {
@@ -28,6 +37,16 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResend = async () => {
+    setResendStatus('');
+    const { error: resendError } = await resendConfirmation(email);
+    if (resendError) {
+      setResendStatus(resendError.message || 'Failed to resend confirmation email');
+      return;
+    }
+    setResendStatus('Confirmation email sent. Please check your inbox.');
   };
 
   return (
@@ -67,6 +86,17 @@ const Login = () => {
 
           <form onSubmit={handleLogin} className="space-y-5 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
             {error && <div className="p-3 bg-red-50 text-red-500 rounded-xl text-sm font-medium">{error}</div>}
+            {needsConfirmation && (
+              <div className="p-3 bg-yellow-50 text-yellow-800 rounded-xl text-sm font-medium flex items-center justify-between gap-3">
+                <span>Email not confirmed. Check your inbox or resend the confirmation email.</span>
+                <button type="button" onClick={handleResend} className="text-primary-blue font-semibold hover:underline">
+                  Resend
+                </button>
+              </div>
+            )}
+            {resendStatus && (
+              <div className="p-3 bg-blue-50 text-blue-700 rounded-xl text-sm font-medium">{resendStatus}</div>
+            )}
             
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-2">Email Address</label>

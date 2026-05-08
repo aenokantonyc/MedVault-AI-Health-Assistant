@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Bell, Menu } from 'lucide-react';
+import { Search, Bell, Menu, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const TopNavbar = () => {
@@ -35,11 +35,7 @@ const TopNavbar = () => {
         </motion.button>
 
         <div className="w-10 h-10 rounded-full bg-primary-light flex items-center justify-center border-2 border-white shadow-sm cursor-pointer hover:shadow-md transition-all">
-          <img
-            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex"
-            alt="Profile"
-            className="w-full h-full rounded-full"
-          />
+          <User size={20} className="text-primary-blue" />
         </div>
       </div>
     </div>

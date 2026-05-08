@@ -11,12 +11,17 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.57.4",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.344.0",
+    "pdfjs-dist": "^4.6.82",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^7.15.0"
+    "react-markdown": "^9.0.1",
+    "react-router-dom": "^7.15.0",
+    "react-toastify": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

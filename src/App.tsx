@@ -18,7 +18,15 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface-bg">
+        <div className="w-16 h-16 border-4 border-primary-light border-t-primary-blue rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -26,6 +34,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   return <>{children}</>;
 };
+
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   return (
@@ -48,6 +59,7 @@ function App() {
           </Route>
         </Routes>
       </Router>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </AuthProvider>
   );
 }

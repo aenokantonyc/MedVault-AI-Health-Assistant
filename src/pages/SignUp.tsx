@@ -6,28 +6,48 @@ import { useAuth } from '../contexts/useAuth';
 
 const SignUp = () => {
   const navigate = useNavigate();
-  useAuth(); // Just to keep the hook imported, though we don't use it directly here
+  const { signUp, resendConfirmation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [confirmationNotice, setConfirmationNotice] = useState('');
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setConfirmationNotice('');
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      // In real app, call signUp
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters long');
+        return;
+      }
+      const { error: signUpError, needsEmailConfirmation } = await signUp(email, password, name);
+      if (signUpError) {
+        throw new Error(signUpError.message);
+      }
+      if (needsEmailConfirmation) {
+        setConfirmationNotice('Check your inbox to confirm your email before signing in.');
+        return;
+      }
       navigate('/');
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResend = async () => {
+    const { error: resendError } = await resendConfirmation(email);
+    if (resendError) {
+      setError(resendError.message || 'Failed to resend confirmation email');
+      return;
+    }
+    setConfirmationNotice('Confirmation email sent. Please check your inbox.');
   };
 
   return (
@@ -55,6 +75,14 @@ const SignUp = () => {
 
           <form onSubmit={handleSignUp} className="space-y-5 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
             {error && <div className="p-3 bg-red-50 text-red-500 rounded-xl text-sm font-medium">{error}</div>}
+            {confirmationNotice && (
+              <div className="p-3 bg-blue-50 text-blue-700 rounded-xl text-sm font-medium flex items-center justify-between gap-3">
+                <span>{confirmationNotice}</span>
+                <button type="button" onClick={handleResend} className="text-primary-blue font-semibold hover:underline">
+                  Resend
+                </button>
+              </div>
+            )}
             
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-2">Full Name</label>

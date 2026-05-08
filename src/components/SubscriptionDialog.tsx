@@ -47,11 +47,11 @@ export default function SubscriptionDialog({ isOpen, onClose, onUpgrade }: Subsc
               </div>
               <div className="flex items-start space-x-4">
                 <Check size={28} className="text-green-600 flex-shrink-0 mt-1" />
-                <span className="text-xl text-gray-800">Finds abnormal values automatically</span>
+                <span className="text-xl text-gray-800">Highlights notable values for review</span>
               </div>
               <div className="flex items-start space-x-4">
                 <Check size={28} className="text-green-600 flex-shrink-0 mt-1" />
-                <span className="text-xl text-gray-800">Detects diabetes or heart risk early</span>
+                <span className="text-xl text-gray-800">Summarizes trends without medical conclusions</span>
               </div>
               <div className="flex items-start space-x-4">
                 <Check size={28} className="text-green-600 flex-shrink-0 mt-1" />
